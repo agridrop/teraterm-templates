@@ -1,0 +1,1041 @@
+;===============================================================================
+; Tera Term SSH Auto Login Template
+;
+; Description:
+;   SSH接続を行い、必要に応じてセッションログを取得するテンプレート。
+;
+; Supported authentication methods:
+;   1. Public key authentication (automatic)
+;   2. Public key authentication (passphrase prompt)
+;   3. Public key authentication (Pageant)
+;   4. Password authentication (password prompt)
+;
+; 原則として「ユーザー設定領域」のみ変更してください。
+;===============================================================================
+
+
+;###############################################################################
+;
+;                           ユーザー設定領域
+;
+;###############################################################################
+
+
+;===============================================================================
+; 1. SSH接続設定
+;===============================================================================
+
+; 接続先ホスト
+;
+; IPv4 / IPv6 / ホスト名 / FQDNを指定可能。
+; IPv6の場合も [] は付けず、アドレスのみ指定してください。
+;
+; Example:
+;   SSH_HOST = '192.168.1.10'
+;   SSH_HOST = 'server.example.com'
+;   SSH_HOST = '2001:db8::10'
+;
+SSH_HOST = 'xxx.xxx.xxx.xxx'
+
+
+; SSHポート
+SSH_PORT = 22
+
+
+; SSHログインユーザー
+SSH_USER = 'xxxxx'
+
+
+;===============================================================================
+; 2. SSH認証設定
+;===============================================================================
+
+; 認証方式
+;
+;   1 : 公開鍵認証（自動ログイン）
+;
+;       SSH_KEY_FILE に指定した秘密鍵を使用して自動ログインする。
+;       主にパスフレーズなし秘密鍵向け。
+;
+;
+;   2 : 公開鍵認証（認証ダイアログ表示）
+;
+;       SSH_KEY_FILE に指定した秘密鍵を使用し、
+;       /ask4passwd により認証ダイアログを表示する。
+;
+;       パスフレーズ付き秘密鍵:
+;           パスフレーズを入力して接続。
+;
+;       パスフレーズなし秘密鍵:
+;           パスフレーズ自体は不要なので、
+;           入力欄を空欄のまま進めることができる。
+;
+;       対話利用では扱いやすいため、本テンプレートのデフォルト。
+;
+;
+;   3 : Pageant
+;
+;       Pageantへ登録済みの秘密鍵を使用する。
+;       Tera Term自身は秘密鍵ファイルを直接読み込まない。
+;
+;
+;   4 : パスワード認証
+;
+;       /ask4passwd により接続時にパスワードを入力する。
+;       TTLファイル内へパスワードを保存しない。
+;
+SSH_AUTH_MODE = 2
+
+
+; SSH_AUTH_MODE = 1 または 2 の場合に使用
+SSH_KEY_FILE = 'C:\path\to\privatekey'
+
+
+;===============================================================================
+; 3. プロンプト設定
+;===============================================================================
+
+; 接続先シェルのプロンプトを判定する正規表現
+;
+; デフォルトでは以下のようなPOSIX系シェルを想定:
+;
+;   user@host:~$
+;   root@host:~#
+;   [user@host ~]$
+;
+PROMPT_REGEX = '^[^\r\n]*[#$] *$'
+
+
+; ネットワーク機器等で ">" も使用する場合:
+;
+; PROMPT_REGEX = '^[^\r\n]*[#$>] *$'
+;
+; zsh等で "%" も使用する場合:
+;
+; PROMPT_REGEX = '^[^\r\n]*[#$>%] *$'
+
+
+; プロンプト待機タイムアウト [秒]
+PROMPT_TIMEOUT = 15
+
+
+;===============================================================================
+; 4. SSH接続タイムアウト
+;===============================================================================
+
+; SSH接続タイムアウト [秒]
+SSH_CONNECT_TIMEOUT = 5
+
+
+;===============================================================================
+; 5. セッションログ基本設定
+;===============================================================================
+
+; セッションログを取得する
+;
+;   0 : 無効
+;   1 : 有効
+;
+LOG_ENABLE = 1
+
+
+; ログ保存フォルダ
+LOG_DIR_NAME = 'log-teraterm'
+
+
+; ログファイル生成方式
+;
+;   1 : セッションごと
+;
+;       YYYYMMDD-HHMMSS_HOST_PORT_USER.log
+;
+;       Example:
+;       20260822-001500_server.example.com_22_admin.log
+;
+;
+;   2 : 接続先・ユーザーごと
+;
+;       HOST_PORT_USER.log
+;
+;       Example:
+;       server.example.com_22_admin.log
+;
+;       LOG_APPEND = 1 と組み合わせることで、
+;       同一接続先・ユーザーのログを1ファイルへ集約可能。
+;
+LOG_FILE_MODE = 1
+
+
+; ログファイル拡張子
+LOG_FILE_EXTENSION = '.log'
+
+
+; セッション日時フォーマット
+;
+; 年月日を先頭にすることで、
+; ファイル名の文字列ソートと時系列順を一致させる。
+;
+LOG_TIMESTAMP_FORMAT = '%Y%m%d-%H%M%S'
+
+
+;===============================================================================
+; 6. Tera Termログ形式設定
+;===============================================================================
+
+; Binary
+;
+;   0 : テキストログ
+;   1 : バイナリログ
+;
+LOG_BINARY = 0
+
+
+; Append
+;
+;   0 : 既存ファイルを上書き
+;   1 : 既存ファイルの末尾へ追記
+;
+; LOG_FILE_MODE = 1 の場合は通常毎回異なるファイル名になるため、
+; 同名ファイルが存在した場合のみ追記される。
+;
+LOG_APPEND = 1
+
+
+; Plain text
+;
+;   0 : ASCII非表示文字を除去しない
+;   1 : ASCII非表示文字をログへ書き込まない
+;
+; LOG_BINARY = 1 の場合は無視される。
+;
+LOG_PLAIN_TEXT = 0
+
+
+; Timestamp
+;
+;   0 : 各行へのタイムスタンプなし
+;   1 : 各行へタイムスタンプを付与
+;
+; LOG_BINARY = 1 の場合は無視される。
+;
+LOG_TIMESTAMP = 1
+
+
+; ログダイアログ
+;
+;   0 : 表示
+;   1 : 非表示
+;
+LOG_HIDE_DIALOG = 1
+
+
+; ログ開始前に既に表示されている画面バッファを含める
+;
+;   0 : 含めない
+;   1 : 含める
+;
+; SSH Banner / MOTD等も含めたい場合は 1 を指定。
+;
+LOG_INCLUDE_SCREEN_BUFFER = 0
+
+
+; タイムスタンプ形式
+;
+;   0 : Local Time
+;   1 : UTC
+;   2 : Logging開始からの経過時間
+;   3 : Connection開始からの経過時間
+;
+LOG_TIMESTAMP_TYPE = 0
+
+
+;===============================================================================
+; 7. ログ内容設定
+;===============================================================================
+
+; ログファイル冒頭へTera Term側の接続情報を記録
+;
+;   0 : 無効
+;   1 : 有効
+;
+; 以下を記録:
+;   - Session Start
+;   - SSH Host
+;   - SSH Port
+;   - SSH User
+;   - Authentication Method
+;
+LOG_HEADER_ENABLE = 1
+
+
+; SSHログイン後、接続先からセッション情報を取得
+;
+;   0 : 無効
+;   1 : 有効
+;
+; 以下のコマンドは一般的なLinux / Unix系環境を想定。
+; ネットワーク機器や独自CLIでは 0 を推奨。
+;
+SESSION_INFO_ENABLE = 1
+
+
+; 以下は SESSION_INFO_ENABLE = 1 の場合に使用
+
+
+; サーバ日時
+; Command: date
+SESSION_INFO_DATE = 1
+
+
+; ホスト名
+; Command: hostname
+SESSION_INFO_HOST = 1
+
+
+; 現在の実効ユーザー
+; Command: whoami
+SESSION_INFO_USER = 1
+
+
+; UID / GID / 所属グループ
+; Command: id
+SESSION_INFO_ID = 1
+
+
+; カレントディレクトリ
+; Command: pwd
+SESSION_INFO_WORKING_DIR = 1
+
+
+; Terminal / PTY
+; Command: tty
+SESSION_INFO_TTY = 1
+
+
+; SSH接続情報
+; Command: echo "$SSH_CONNECTION"
+;
+; OpenSSHでは通常以下の形式:
+;
+;   ClientIP ClientPort ServerIP ServerPort
+;
+SESSION_INFO_SSH_CONNECTION = 1
+
+
+;===============================================================================
+; 8. マクロ終了後のログ取得
+;===============================================================================
+
+; マクロによる初期処理終了後もログ取得を継続する
+;
+;   0 : マクロ終了時にログを終了
+;   1 : そのままログ取得を継続
+;
+; 「自動ログイン後、人間がTera Termを操作する」用途では 1 を推奨。
+;
+; su / sudo / nested SSH 等を行った場合も、
+; Tera Term端末へ送られてきた内容は同じセッションログへ記録される。
+;
+LOG_CONTINUE = 1
+
+
+;===============================================================================
+; 9. エラーログ設定
+;===============================================================================
+
+; マクロ実行時のエラーをCSVへ記録
+;
+;   0 : 無効
+;   1 : 有効
+;
+ERROR_LOG_ENABLE = 1
+
+
+; エラーログファイル名
+ERROR_LOG_FILE_NAME = '_macro_error.csv'
+
+
+;===============================================================================
+; 10. デバッグ設定
+;===============================================================================
+
+; 生成したSSH接続コマンドを接続前に表示
+;
+;   0 : 無効
+;   1 : 有効
+;
+; パスワードや秘密鍵のパスフレーズそのものは
+; SSH_COMMANDへ含めない設計。
+;
+DEBUG_ENABLE = 0
+
+
+
+;###############################################################################
+;
+;                       以下、原則変更不要
+;
+;###############################################################################
+
+
+;===============================================================================
+; 初期処理
+;===============================================================================
+
+; MACRO側のカレントディレクトリ取得
+getdir BASE_DIR
+
+
+; セッション開始日時取得
+getdate SESSION_TIMESTAMP LOG_TIMESTAMP_FORMAT
+
+if result <> 0 then
+    messagebox '現在日時の取得に失敗しました。' 'Error'
+    end
+endif
+
+
+;===============================================================================
+; 設定値チェック
+;===============================================================================
+
+; SSH_AUTH_MODE
+if SSH_AUTH_MODE < 1 then
+    messagebox 'SSH_AUTH_MODE の指定が不正です。' 'Configuration Error'
+    end
+endif
+
+if SSH_AUTH_MODE > 4 then
+    messagebox 'SSH_AUTH_MODE の指定が不正です。' 'Configuration Error'
+    end
+endif
+
+
+; LOG_FILE_MODE
+if LOG_FILE_MODE < 1 then
+    messagebox 'LOG_FILE_MODE の指定が不正です。' 'Configuration Error'
+    end
+endif
+
+if LOG_FILE_MODE > 2 then
+    messagebox 'LOG_FILE_MODE の指定が不正です。' 'Configuration Error'
+    end
+endif
+
+
+; LOG_TIMESTAMP_TYPE
+if LOG_TIMESTAMP_TYPE < 0 then
+    messagebox 'LOG_TIMESTAMP_TYPE の指定が不正です。' 'Configuration Error'
+    end
+endif
+
+if LOG_TIMESTAMP_TYPE > 3 then
+    messagebox 'LOG_TIMESTAMP_TYPE の指定が不正です。' 'Configuration Error'
+    end
+endif
+
+
+;===============================================================================
+; ログフォルダ準備
+;===============================================================================
+
+NEED_LOG_DIR = 0
+
+if LOG_ENABLE = 1 then
+    NEED_LOG_DIR = 1
+endif
+
+if ERROR_LOG_ENABLE = 1 then
+    NEED_LOG_DIR = 1
+endif
+
+
+if NEED_LOG_DIR = 1 then
+
+    sprintf2 LOG_DIR '%s\%s' BASE_DIR LOG_DIR_NAME
+
+    ; ファイルまたはフォルダの存在確認
+    filesearch LOG_DIR
+
+    if result = 1 then
+
+        ; 同名のものがフォルダであることを確認
+        foldersearch LOG_DIR
+
+        if result = 0 then
+            messagebox 'ログフォルダと同名のファイルが存在します。' 'Error'
+            end
+        endif
+
+    else
+
+        ; ログフォルダ作成
+        foldercreate LOG_DIR
+
+        if result <> 0 then
+            messagebox 'ログフォルダの作成に失敗しました。' 'Error'
+            end
+        endif
+
+    endif
+
+endif
+
+
+;===============================================================================
+; 秘密鍵確認
+;===============================================================================
+
+if SSH_AUTH_MODE = 1 then
+    call check_key_file
+endif
+
+if SSH_AUTH_MODE = 2 then
+    call check_key_file
+endif
+
+
+;===============================================================================
+; SSH接続コマンド作成
+;===============================================================================
+
+; /P= でポートを指定することで、
+; IPv6アドレスでも HOST:PORT の区切りが曖昧にならない。
+;
+sprintf2 SSH_COMMAND '%s /P=%d /ssh /2 /user="%s" /timeout=%d' SSH_HOST SSH_PORT SSH_USER SSH_CONNECT_TIMEOUT
+
+
+;-------------------------------------------------------------------------------
+; Mode 1
+; 公開鍵認証 / 自動ログイン
+;-------------------------------------------------------------------------------
+
+if SSH_AUTH_MODE = 1 then
+
+    sprintf2 SSH_AUTH_OPTIONS ' /auth=publickey /keyfile="%s"' SSH_KEY_FILE
+    strconcat SSH_COMMAND SSH_AUTH_OPTIONS
+
+    SSH_AUTH_METHOD = 'publickey (automatic)'
+
+endif
+
+
+;-------------------------------------------------------------------------------
+; Mode 2
+; 公開鍵認証 / 認証ダイアログ
+;-------------------------------------------------------------------------------
+
+if SSH_AUTH_MODE = 2 then
+
+    sprintf2 SSH_AUTH_OPTIONS ' /auth=publickey /keyfile="%s" /ask4passwd' SSH_KEY_FILE
+    strconcat SSH_COMMAND SSH_AUTH_OPTIONS
+
+    SSH_AUTH_METHOD = 'publickey (prompt)'
+
+endif
+
+
+;-------------------------------------------------------------------------------
+; Mode 3
+; Pageant
+;-------------------------------------------------------------------------------
+
+if SSH_AUTH_MODE = 3 then
+
+    strconcat SSH_COMMAND ' /auth=pageant'
+
+    SSH_AUTH_METHOD = 'publickey (Pageant)'
+
+endif
+
+
+;-------------------------------------------------------------------------------
+; Mode 4
+; パスワード認証
+;-------------------------------------------------------------------------------
+
+if SSH_AUTH_MODE = 4 then
+
+    strconcat SSH_COMMAND ' /auth=password /ask4passwd'
+
+    SSH_AUTH_METHOD = 'password (prompt)'
+
+endif
+
+
+;===============================================================================
+; デバッグ表示
+;===============================================================================
+
+if DEBUG_ENABLE = 1 then
+    messagebox SSH_COMMAND 'SSH Command'
+endif
+
+
+;===============================================================================
+; ログファイル名用文字列作成
+;===============================================================================
+
+; SSH_HOST / SSH_USER の原本は変更せず、
+; ファイル名用コピーのみWindows非互換文字を "_" へ置換する。
+
+FILE_COMPONENT = SSH_HOST
+call sanitize_file_component
+LOG_HOST = FILE_COMPONENT
+
+FILE_COMPONENT = SSH_USER
+call sanitize_file_component
+LOG_USER = FILE_COMPONENT
+
+
+;===============================================================================
+; ログファイル名作成
+;===============================================================================
+
+if LOG_ENABLE = 1 then
+
+    ;---------------------------------------------------------------------------
+    ; Mode 1
+    ;
+    ; YYYYMMDD-HHMMSS_HOST_PORT_USER.log
+    ;---------------------------------------------------------------------------
+
+    if LOG_FILE_MODE = 1 then
+
+        sprintf2 LOG_FILE_PATH '%s\%s_%s_%d_%s%s' LOG_DIR SESSION_TIMESTAMP LOG_HOST SSH_PORT LOG_USER LOG_FILE_EXTENSION
+
+    endif
+
+
+    ;---------------------------------------------------------------------------
+    ; Mode 2
+    ;
+    ; HOST_PORT_USER.log
+    ;---------------------------------------------------------------------------
+
+    if LOG_FILE_MODE = 2 then
+
+        sprintf2 LOG_FILE_PATH '%s\%s_%d_%s%s' LOG_DIR LOG_HOST SSH_PORT LOG_USER LOG_FILE_EXTENSION
+
+    endif
+
+
+    ; logopen前に既存ファイルか確認
+    filesearch LOG_FILE_PATH
+    LOG_FILE_EXISTS = result
+
+endif
+
+
+;===============================================================================
+; SSH接続
+;===============================================================================
+
+connect SSH_COMMAND
+
+
+; connect result:
+;
+;   0 : Tera Termと未リンク
+;   1 : Tera Termとはリンク済みだがホスト未接続
+;   2 : ホストへ接続済み
+;
+
+if result <> 2 then
+
+    ERROR_TYPE = 'SSH_CONNECT_FAILED'
+    call write_error_log
+
+    messagebox 'SSH接続に失敗しました。' 'Connection Error'
+    end
+
+endif
+
+
+;===============================================================================
+; セッションログ開始
+;===============================================================================
+
+if LOG_ENABLE = 1 then
+
+    logopen LOG_FILE_PATH LOG_BINARY LOG_APPEND LOG_PLAIN_TEXT LOG_TIMESTAMP LOG_HIDE_DIALOG LOG_INCLUDE_SCREEN_BUFFER LOG_TIMESTAMP_TYPE
+
+    ; logopen成功時 result = 0
+    if result <> 0 then
+
+        ERROR_TYPE = 'LOG_OPEN_FAILED'
+        call write_error_log
+
+        messagebox 'セッションログファイルを開けませんでした。' 'Log Error'
+        end
+
+    endif
+
+endif
+
+
+;===============================================================================
+; ログヘッダ
+;===============================================================================
+
+if LOG_ENABLE = 1 then
+
+    if LOG_HEADER_ENABLE = 1 then
+        call write_log_header
+    endif
+
+endif
+
+
+;===============================================================================
+; プロンプト待機設定
+;===============================================================================
+
+timeout = PROMPT_TIMEOUT
+
+
+;===============================================================================
+; 初回プロンプト待機
+;===============================================================================
+
+call wait_prompt
+
+
+;===============================================================================
+; 接続先セッション情報取得
+;===============================================================================
+
+if LOG_ENABLE = 1 then
+
+    if SESSION_INFO_ENABLE = 1 then
+
+        sendln 'echo "===== REMOTE SESSION INFO ====="'
+        call wait_prompt
+
+
+        ;-----------------------------------------------------------------------
+        ; サーバ日時
+        ;-----------------------------------------------------------------------
+
+        if SESSION_INFO_DATE = 1 then
+
+            sendln 'date'
+            call wait_prompt
+
+        endif
+
+
+        ;-----------------------------------------------------------------------
+        ; ホスト名
+        ;-----------------------------------------------------------------------
+
+        if SESSION_INFO_HOST = 1 then
+
+            sendln 'hostname'
+            call wait_prompt
+
+        endif
+
+
+        ;-----------------------------------------------------------------------
+        ; 現在の実効ユーザー
+        ;-----------------------------------------------------------------------
+
+        if SESSION_INFO_USER = 1 then
+
+            sendln 'whoami'
+            call wait_prompt
+
+        endif
+
+
+        ;-----------------------------------------------------------------------
+        ; UID / GID / 所属グループ
+        ;-----------------------------------------------------------------------
+
+        if SESSION_INFO_ID = 1 then
+
+            sendln 'id'
+            call wait_prompt
+
+        endif
+
+
+        ;-----------------------------------------------------------------------
+        ; カレントディレクトリ
+        ;-----------------------------------------------------------------------
+
+        if SESSION_INFO_WORKING_DIR = 1 then
+
+            sendln 'pwd'
+            call wait_prompt
+
+        endif
+
+
+        ;-----------------------------------------------------------------------
+        ; Terminal / PTY
+        ;-----------------------------------------------------------------------
+
+        if SESSION_INFO_TTY = 1 then
+
+            sendln 'tty'
+            call wait_prompt
+
+        endif
+
+
+        ;-----------------------------------------------------------------------
+        ; SSH接続情報
+        ;-----------------------------------------------------------------------
+
+        if SESSION_INFO_SSH_CONNECTION = 1 then
+
+            sendln 'echo "$SSH_CONNECTION"'
+            call wait_prompt
+
+        endif
+
+
+        sendln 'echo "==============================="'
+        call wait_prompt
+
+    endif
+
+endif
+
+
+;===============================================================================
+; ログ終了処理
+;===============================================================================
+
+if LOG_ENABLE = 1 then
+
+    if LOG_CONTINUE = 0 then
+        logclose
+    endif
+
+endif
+
+
+;===============================================================================
+; 正常終了
+;===============================================================================
+
+end
+
+
+
+;###############################################################################
+;
+;                              サブルーチン
+;
+;###############################################################################
+
+
+;===============================================================================
+; 秘密鍵ファイル確認
+;===============================================================================
+
+:check_key_file
+
+filesearch SSH_KEY_FILE
+
+if result = 0 then
+
+    ERROR_TYPE = 'SSH_KEY_FILE_NOT_FOUND'
+    call write_error_log
+
+    messagebox 'SSH_KEY_FILE に指定された秘密鍵ファイルが見つかりません。' 'Key File Error'
+    end
+
+endif
+
+
+foldersearch SSH_KEY_FILE
+
+if result = 1 then
+
+    ERROR_TYPE = 'SSH_KEY_FILE_IS_DIRECTORY'
+    call write_error_log
+
+    messagebox 'SSH_KEY_FILE にファイルではなくフォルダが指定されています。' 'Key File Error'
+    end
+
+endif
+
+return
+
+
+;===============================================================================
+; Windowsファイル名用文字列変換
+;===============================================================================
+
+:sanitize_file_component
+
+; Windowsファイル名で使用できない以下の文字を "_" へ置換:
+;
+;   < > : " / \ | ? *
+;
+; IPv6アドレスの ":" や
+; DOMAIN\user 形式の "\" 等もここで安全な文字へ変換する。
+;
+; SSH_HOST / SSH_USER の原本自体は変更しない。
+
+while 1
+
+    strreplace FILE_COMPONENT 1 '[<>:"/\\|?*]' '_'
+
+    if result <> 1 then
+        break
+    endif
+
+endwhile
+
+return
+
+
+;===============================================================================
+; プロンプト待機
+;===============================================================================
+
+:wait_prompt
+
+waitregex PROMPT_REGEX
+
+
+; result:
+;
+;   0 : タイムアウト
+;   1 : PROMPT_REGEX に一致
+;
+
+if result = 0 then
+
+    ERROR_TYPE = 'PROMPT_TIMEOUT'
+    call write_error_log
+
+    messagebox 'プロンプト待機中にタイムアウトしました。PROMPT_REGEX を確認してください。' 'Prompt Timeout'
+
+
+    if LOG_ENABLE = 1 then
+
+        if LOG_CONTINUE = 0 then
+            logclose
+        endif
+
+    endif
+
+
+    ; SSHセッション自体は切断しない。
+    ; マクロのみ終了し、Tera Termはそのまま操作可能。
+    end
+
+endif
+
+return
+
+
+;===============================================================================
+; セッションログヘッダ出力
+;===============================================================================
+
+:write_log_header
+
+; 既存ログへ追記する場合はセッション間に空行を挿入
+if LOG_APPEND <> 0 then
+
+    if LOG_FILE_EXISTS = 1 then
+        logwrite #13#10
+    endif
+
+endif
+
+
+logwrite '===== TERA TERM SSH SESSION ====='#13#10
+
+
+sprintf2 LOG_LINE 'Session Start : %s' SESSION_TIMESTAMP
+logwrite LOG_LINE
+logwrite #13#10
+
+
+sprintf2 LOG_LINE 'SSH Host      : %s' SSH_HOST
+logwrite LOG_LINE
+logwrite #13#10
+
+
+sprintf2 LOG_LINE 'SSH Port      : %d' SSH_PORT
+logwrite LOG_LINE
+logwrite #13#10
+
+
+sprintf2 LOG_LINE 'SSH User      : %s' SSH_USER
+logwrite LOG_LINE
+logwrite #13#10
+
+
+sprintf2 LOG_LINE 'Authentication: %s' SSH_AUTH_METHOD
+logwrite LOG_LINE
+logwrite #13#10
+
+
+logwrite '================================='#13#10
+logwrite #13#10
+
+return
+
+
+;===============================================================================
+; エラーログ出力
+;===============================================================================
+
+:write_error_log
+
+if ERROR_LOG_ENABLE <> 1 then
+    return
+endif
+
+
+; エラー発生日時取得
+getdate ERROR_TIMESTAMP LOG_TIMESTAMP_FORMAT
+
+if result <> 0 then
+    return
+endif
+
+
+; エラーログファイル
+sprintf2 ERROR_LOG_FILE_PATH '%s\%s' LOG_DIR ERROR_LOG_FILE_NAME
+
+
+; ファイルが既に存在するか確認
+filesearch ERROR_LOG_FILE_PATH
+
+ERROR_LOG_EXISTS = result
+
+
+; 追記モードでオープン
+fileopen ERROR_FILE_HANDLE ERROR_LOG_FILE_PATH 1
+
+if ERROR_FILE_HANDLE < 0 then
+    return
+endif
+
+
+; 新規作成時のみCSVヘッダ追加
+if ERROR_LOG_EXISTS = 0 then
+
+    filewriteln ERROR_FILE_HANDLE '"Timestamp","SSHHost","SSHPort","SSHUser","ErrorType"'
+
+endif
+
+
+; エラー情報
+sprintf2 ERROR_MESSAGE '"%s","%s",%d,"%s","%s"' ERROR_TIMESTAMP SSH_HOST SSH_PORT SSH_USER ERROR_TYPE
+
+filewriteln ERROR_FILE_HANDLE ERROR_MESSAGE
+
+fileclose ERROR_FILE_HANDLE
+
+return
